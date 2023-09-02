@@ -6,6 +6,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.produtos.service.ProdutoService;
+import org.produtos.service.dto.ClienteProdutoDTO;
 import org.produtos.service.dto.ResultadoConsultaDTO;
 
 import java.util.List;
@@ -20,6 +21,13 @@ public class ProdutoController {
     @Produces(MediaType.APPLICATION_JSON)
     public List<ResultadoConsultaDTO> retrieveHistoricoProdutosClientes() {
         return produtoService.buscarHistoricoProdutosClientes();
+    }
+
+    @GET
+    @Path("/clientes-produtos")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<ClienteProdutoDTO> retrieveResumoProdutosClientes() {
+        return produtoService.buscarResumoProdutosClientes();
     }
 }
 

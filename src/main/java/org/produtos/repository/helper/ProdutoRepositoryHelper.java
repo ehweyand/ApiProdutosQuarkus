@@ -38,4 +38,67 @@ public class ProdutoRepositoryHelper {
                 ") < 10\n" +
                 "ORDER BY tg.mes, tg.total DESC;";
     }
+
+    public static String queryForFindResumoProdutosClientes() {
+        return "WITH ClientesMaisAtivos AS (\n" +
+                "    SELECT\n" +
+                "        cp.clientes_id,\n" +
+                "        COUNT(DISTINCT cp.pedidos_id) AS total_pedidos\n" +
+                "    FROM\n" +
+                "        produtos_pedidos cp\n" +
+                "    JOIN pedidos pe ON cp.pedidos_id = pe.id\n" +
+                "    WHERE\n" +
+                "        pe.data_pedido > current_date - INTERVAL '1 year'\n" +
+                "    GROUP BY\n" +
+                "        cp.clientes_id\n" +
+                "    ORDER BY\n" +
+                "        total_pedidos DESC\n" +
+                "    LIMIT 100\n" +
+                "),\n" +
+                "\n" +
+                "ProdutosMaisCaros AS (\n" +
+                "    SELECT\n" +
+                "        p.id AS produto_id,\n" +
+                "        p.valor_unitario,\n" +
+                "        ROW_NUMBER() OVER (ORDER BY p.valor_unitario DESC) AS rank_valor\n" +
+                "    FROM\n" +
+                "        produtos p\n" +
+                "    WHERE\n" +
+                "        p.valor_unitario > (SELECT AVG(valor_unitario) FROM produtos)\n" +
+                "),\n" +
+                "\n" +
+                "PedidosRecentes AS (\n" +
+                "    SELECT\n" +
+                "        cp.clientes_id,\n" +
+                "        cp.pedidos_id,\n" +
+                "        SUM(p.valor_unitario) AS total_pedido\n" +
+                "    FROM\n" +
+                "        produtos_pedidos cp\n" +
+                "    JOIN produtos p ON cp.produtos_id = p.id\n" +
+                "    WHERE\n" +
+                "        cp.produtos_id IN (SELECT produto_id FROM ProdutosMaisCaros WHERE rank_valor <= 50)\n" +
+                "    GROUP BY\n" +
+                "        cp.clientes_id, cp.pedidos_id\n" +
+                ")\n" +
+                "\n" +
+                "SELECT\n" +
+                "    cma.clientes_id,\n" +
+                "    c.nome,\n" +
+                "    c.endereco,\n" +
+                "    pr.pedidos_id,\n" +
+                "    pr.total_pedido,\n" +
+                "    pcm.produto_id,\n" +
+                "    p.descricao,\n" +
+                "    pcm.valor_unitario AS valor_produto,\n" +
+                "    pcm.rank_valor\n" +
+                "FROM\n" +
+                "    ClientesMaisAtivos cma\n" +
+                "JOIN clientes c ON cma.clientes_id = c.id\n" +
+                "JOIN PedidosRecentes pr ON cma.clientes_id = pr.clientes_id\n" +
+                "JOIN produtos_pedidos cp ON pr.pedidos_id = cp.pedidos_id AND pr.clientes_id = cp.clientes_id\n" +
+                "JOIN ProdutosMaisCaros pcm ON cp.produtos_id = pcm.produto_id\n" +
+                "JOIN produtos p ON pcm.produto_id = p.id\n" +
+                "ORDER BY\n" +
+                "    cma.total_pedidos DESC, pr.total_pedido DESC, pcm.rank_valor;";
+    }
 }

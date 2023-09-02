@@ -8,6 +8,7 @@ import jakarta.persistence.TypedQuery;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.transform.Transformers;
 import org.produtos.repository.helper.ProdutoRepositoryHelper;
+import org.produtos.service.dto.ClienteProdutoDTO;
 import org.produtos.service.dto.ResultadoConsultaDTO;
 
 import java.util.ArrayList;
@@ -29,6 +30,20 @@ public class ProdutoRepository {
 
         for (Object[] row : rawResults) {
             results.add(new ResultadoConsultaDTO(row));
+        }
+
+        return results;
+    }
+
+    public List<ClienteProdutoDTO> buscarResumoProdutosClientes() {
+        String sql = ProdutoRepositoryHelper.queryForFindResumoProdutosClientes();
+        Query query = em.createNativeQuery(sql);
+        List<Object[]> rawResults = query.getResultList();
+
+        List<ClienteProdutoDTO> results = new ArrayList<>();
+
+        for (Object[] row : rawResults) {
+            results.add(new ClienteProdutoDTO(row));
         }
 
         return results;
